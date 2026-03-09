@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐁 12 úhlů myšlení - interaktivní protaktor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Georgia,serif;background:#fff;color:#111;max-width:1200px;margin:0 auto;padding:2rem 1rem;line-height:1.6}
+h1{font-size:2rem;margin-bottom:.2rem;display:flex;align-items:center;gap:10px}
+.sub{color:#888;font-size:.95rem;margin-bottom:2rem}
+.container{display:flex;flex-wrap:wrap;gap:2rem;margin-bottom:2rem}
+.viz-panel{flex:1.2;min-width:400px}
+.text-panel{flex:1.8;min-width:500px}
+textarea{width:100%;padding:.8rem;border:1px solid #ccc;font-family:Georgia,serif;font-size:.95rem;resize:vertical;min-height:300px;margin-bottom:1rem;border-radius:4px}
+.btn{padding:.6rem 1.5rem;background:#111;color:#fff;border:none;cursor:pointer;font-size:.95rem;font-family:Georgia,serif;border-radius:4px}
+.btn:hover{background:#333}
+.btn-outline{background:#fff;color:#111;border:1px solid #111}
+.row{display:flex;gap:.8rem;flex-wrap:wrap;margin:1rem 0 1.5rem}
+.highlighted{width:100%;padding:.8rem;border:1px solid #ccc;font-size:.95rem;min-height:300px;background:#fafafa;line-height:1.8;white-space:pre-wrap;border-radius:4px;overflow-y:auto;max-height:500px}
+canvas{width:100%;max-width:500px;height:auto;display:block;margin:0 auto;cursor:pointer}
+.legend{margin:1.5rem 0;display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+.legend-item{font-size:.8rem;padding:.3rem 1rem;border-radius:20px;cursor:pointer;transition:all 0.2s;border:1px solid transparent;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+.legend-item:hover{transform:scale(1.02);box-shadow:0 2px 6px rgba(0,0,0,0.15)}
+.legend-item.active{font-weight:bold;border-color:#000;border-width:2px}
+.info-panel{margin-top:2rem;padding:1.5rem;background:#f9f9f9;border-radius:8px;border-left:5px solid #111;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.info-panel h3{margin-bottom:.8rem;font-size:1.3rem}
+.info-panel .technika{font-weight:bold;color:#444;margin:.5rem 0}
+.info-panel .cil{font-style:italic;color:#555;margin-top:.8rem;padding-top:.8rem;border-top:1px dashed #aaa}
+.info-panel .protilehly{background:#f0f0f0;padding:.4rem .8rem;border-radius:20px;display:inline-block;margin-top:.5rem;font-size:.9rem}
+.stats{display:flex;justify-content:space-between;margin:.5rem 0 1rem;font-size:.9rem;color:#666;background:#f5f5f5;padding:.5rem 1rem;border-radius:20px}
+#angle-popis{min-height:80px}
+</style>
+</head>
+<body>
+
+<h1>🐁 12 úhlů myšlení <span style="font-size:1rem;color:#888;font-weight:normal">(klikni na úhel → zvýrazní v textu)</span></h1>
+<div class="sub">Protilehlé dvojice na kruhu: 0°-180°, 30°-210°, 60°-240°, 90°-270°, 120°-300°, 150°-330°</div>
+
+<div class="container">
+  <div class="viz-panel">
+    <canvas id="protractor" width="500" height="500"></canvas>
+    <div class="stats" id="stats"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+  <div class="text-panel">
+    <textarea id="input-text" placeholder="Vložte text (úvaha, příběh, deník, odpovědi na otázky k pohádce…)"></textarea>
+    <div class="row">
+      <button class="btn" onclick="analyze()">🔍 Analyzovat úhly</button>
+      <button class="btn btn-outline" onclick="reset()">✕ Reset</button>
+    </div>
+    <div class="highlighted" id="highlighted"></div>
+  </div>
+</div>
+
+<div class="info-panel" id="info-panel">
+  <h3 id="angle-title">✨ Klikni na segment úhloměru</h3>
+  <div id="angle-technika" class="technika"></div>
+  <div id="angle-popis"></div>
+  <div id="angle-cil" class="cil"></div>
+  <div id="angle-protilehly" class="protilehly"></div>
+</div>
+
+<script>
+// Definice 12 úhlů podle zadání
+const UHLY = [
+  { 
+    stupen: 0, 
+    nazev: 'Analytický', 
+    plnyNazev: '0° Analytický',
+    protilehly: 180,
+    barva: '#4285F4', // modrá
+    textBarva: '#fff',
+    technika: 'Záměrná nejednoznačnost (Ambiguitní syntax)',
+    popis: 'Hledání paralel, struktur, vztahů a více významů v jedné struktuře. Analytické myšlení hledá řád a souvislosti.',
+    cil: 'Rozvíjí schopnost vidět více perspektiv najednou a nacházet skryté vztahy mezi jevy.',
+    patterns: ['analýza', 'struktura', 'vztah', 'souvislost', 'paralela', 'systém', 'logika', 'tedy', 'protože', 'neboť']
+  },
+  { 
+    stupen: 180, 
+    nazev: 'Asociační', 
+    plnyNazev: '180° Asociační',
+    protilehly: 0,
+    barva: '#EA4335', // červená
+    textBarva: '#fff',
+    technika: 'Odskoky / Rozpad koheze',
+    popis: 'Volné plynutí myšlenek, skoky mezi tématy, uvolnění z logických řetězců. Asociativní myšlení propojuje zdánlivě nesouvisející.',
+    cil: 'Podporuje kreativitu, laterální myšlení a objevování nových spojení mimo zaběhlé vzorce.',
+    patterns: ['asociace', 'napadá', 'souvisí', 'evokuje', 'připomíná', 'jako když', 'najednou', 'a pak', 'mimochodem']
+  },
+  { 
+    stupen: 30, 
+    nazev: 'Kulturní', 
+    plnyNazev: '30° Kulturní',
+    protilehly: 210,
+    barva: '#34A853', // zelená
+    textBarva: '#fff',
+    technika: 'Přesycení / Redundance (obecné fráze)',
+    popis: 'Ukotvení ve společensky sdílených vzorcích, používání obecně známých frází a kulturních klišé.',
+    cil: 'Posiluje schopnost komunikovat v rámci sdíleného kulturního kódu a používat osvědčené formulace.',
+    patterns: ['jak se říká', 'společnost', 'tradice', 'normální', 'každý ví', 'běžné', 'kultura', 'společenský']
+  },
+  { 
+    stupen: 210, 
+    nazev: 'Introspektivní', 
+    plnyNazev: '210° Introspektivní',
+    protilehly: 30,
+    barva: '#FBBC05', // žlutá
+    textBarva: '#000',
+    technika: 'Izolace / Vytržení z kontextu (osobní pocity)',
+    popis: 'Zaměření na vlastní emoce, pocity a vnitřní prožitky. Introspekce zkoumá niterný svět.',
+    cil: 'Rozvíjí sebepoznání, emoční inteligenci a schopnost reflektovat vlastní stavy.',
+    patterns: ['cítím', 'prožívám', 'uvnitř', 'já', 'můj', 'osobně', 've mně', 'emoce', 'pocit']
+  },
+  { 
+    stupen: 60, 
+    nazev: 'Filozofický', 
+    plnyNazev: '60° Filozofický',
+    protilehly: 240,
+    barva: '#AA00FF', // fialová
+    textBarva: '#fff',
+    technika: 'Záměrná nejednoznačnost (abstraktní otázky)',
+    popis: 'Zpochybňování pevných významů, hledání podstaty, kladení abstraktních otázek o bytí, smyslu, pravdě.',
+    cil: 'Rozvíjí schopnost abstraktního myšlení a hledání hlubších významů.',
+    patterns: ['smysl', 'podstata', 'existuje', 'bytí', 'pravda', 'vědomí', 'absolutní', 'relativní', 'proč']
+  },
+  { 
+    stupen: 240, 
+    nazev: 'Ironický', 
+    plnyNazev: '240° Ironický',
+    protilehly: 60,
+    barva: '#FF6D00', // oranžová
+    textBarva: '#fff',
+    technika: 'Neobvyklé sousedství slov (spojení protikladů)',
+    popis: 'Vytváření napětí a skrytého významu skrze paradoxní spojení, ironii, nadsázku.',
+    cil: 'Rozvíjí schopnost vidět věci z nadhledu a pracovat s kontrastem a paradoxy.',
+    patterns: ['samozřejmě', 'že ano', 'tedy', 'jak jinak', 'paradox', 'ironie', 'naopak', 'ovšem']
+  },
+  { 
+    stupen: 90, 
+    nazev: 'Naivní', 
+    plnyNazev: '90° Naivní',
+    protilehly: 270,
+    barva: '#00BCD4', // tyrkysová
+    textBarva: '#fff',
+    technika: 'Minimalismus / Elipsa',
+    popis: 'Zjednodušení projevu na základní, nehodnotící sdělení. Přímost, jednoduchost, bez elaborace.',
+    cil: 'Rozvíjí schopnost vyjadřovat se přímo a bez zbytečných komplikací.',
+    patterns: ['prostě', 'jasné', 'jednoduché', 'hotovo', 'basta', 'tak', 'ano', 'ne']
+  },
+  { 
+    stupen: 270, 
+    nazev: 'Groteskní', 
+    plnyNazev: '270° Groteskní',
+    protilehly: 90,
+    barva: '#C2185B', // vínová
+    textBarva: '#fff',
+    technika: 'Změna délky vět / Rytmus (extrémní kontrasty)',
+    popis: 'Dramatický, přehnaný, emocionálně nabitý projev. Střídání extrémně krátkých a dlouhých vět.',
+    cil: 'Rozvíjí schopnost pracovat s emocemi a dramatičností sdělení.',
+    patterns: ['absurdní', 'přehnaný', 'neskutečný', 'obrovský', 'strašně', 'hrozně', 'fantasticky', 'drama']
+  },
+  { 
+    stupen: 120, 
+    nazev: 'Jazykový', 
+    plnyNazev: '120° Jazykový',
+    protilehly: 300,
+    barva: '#795548', // hnědá
+    textBarva: '#fff',
+    technika: 'Neobvyklé sousedství slov (hra se slovy)',
+    popis: 'Hra se slovy, jejich zvukem, rytmem, formou. Estetické kvality jazyka jsou v popředí.',
+    cil: 'Rozvíjí jazykovou kreativitu a cit pro estetiku textu.',
+    patterns: ['zvuk', 'slovo', 'rým', 'jazyk', 'říkat', 'vyslovit', 'hra', 'básnický']
+  },
+  { 
+    stupen: 300, 
+    nazev: 'Absurdní', 
+    plnyNazev: '300° Absurdní',
+    protilehly: 120,
+    barva: '#607D8B', // šedomodrá
+    textBarva: '#fff',
+    technika: 'Změna slovosledu (Permutace)',
+    popis: 'Narušení logické stavby vět, vytváření nesmyslných, ale gramaticky možných konstrukcí. Hledání smyslu v nesmyslu.',
+    cil: 'Rozvíjí schopnost vystoupit z konvenční logiky a objevovat nové významy.',
+    patterns: ['proč', 'kdyby', 'co když', 'není možné', 'nesmysl', 'paradox', 'absurdita', 'nelogické']
+  },
+  { 
+    stupen: 150, 
+    nazev: 'Metaforický', 
+    plnyNazev: '150° Metaforický',
+    protilehly: 330,
+    barva: '#388E3C', // tmavě zelená
+    textBarva: '#fff',
+    technika: 'Neobvyklé sousedství slov (obrazná spojení)',
+    popis: 'Spojování vzdálených konceptů, vytváření metafor, obrazných pojmenování a symbolů.',
+    cil: 'Rozvíjí obrazné myšlení a schopnost vidět věci v nových souvislostech.',
+    patterns: ['jako', 'metafora', 'obraz', 'symbol', 'znamená', 'vyjadřuje', 'připomíná', 'ztělesňuje']
+  },
+  { 
+    stupen: 330, 
+    nazev: 'Surrealistický', 
+    plnyNazev: '330° Surrealistický',
+    protilehly: 150,
+    barva: '#8E24AA', // fialová
+    textBarva: '#fff',
+    technika: 'Odskoky / Rozpad koheze (snová logika)',
+    popis: 'Propojování nesouvisejících obrazů a myšlenek do snových scén, fantazijní prvky, nereálnost.',
+    cil: 'Rozvíjí fantazii, imaginaci a schopnost snového myšlení.',
+    patterns: ['sen', 'zdálo se', 'podivný', 'magický', 'nereálný', 'fantazie', 'představa', 'snový']
+  }
+];
+
+// Mapování pro rychlé vyhledání
+const uhelMap = {};
+UHLY.forEach(u => uhelMap[u.stupen] = u);
+
+let markedText = '';
+let uhelSkore = {};
+let totalScore = 0;
+let selectedUhel = null;
+
+function analyze() {
+  const text = document.getElementById('input-text').value;
+  if (!text.trim()) { alert('Vložte text'); return; }
+  
+  const sentences = text.split(/(?<=[.!?…])\s+/).filter(s => s.trim().length > 3);
+  const allWords = text.toLowerCase().split(/\s+/);
+  const wordCount = {};
+  allWords.forEach(w => { if (w.length > 4) wordCount[w] = (wordCount[w]||0)+1; });
+  
+  // Inicializace skóre (všechny úhly na 0)
+  UHLY.forEach(u => uhelSkore[u.stupen] = 0);
+  totalScore = 0;
+  
+  let workingText = text;
+  
+  // 1. Detekce podle klíčových slov (pro každý úhel)
+  UHLY.forEach(u => {
+    let matchCount = 0;
+    u.patterns.forEach(pat => {
+      const re = new RegExp(`\\b${escapeReg(pat)}\\b`, 'gi');
+      const matches = text.match(re);
+      if (matches) {
+        matchCount += matches.length;
+        totalScore += matches.length;
+        workingText = workingText.replace(re, m =>
+          `<span class="angle-${u.stupen}" data-angle="${u.stupen}" style="background:${u.barva};color:${u.textBarva};border-radius:2px;cursor:pointer;padding:0 2px" title="${u.plnyNazev}">${m}</span>`
+        );
+      }
+    });
+    uhelSkore[u.stupen] += matchCount;
+  });
+  
+  // 2. Fixace / opakování (přispívá ke Kulturnímu, Jazykovému, Grotesknímu)
+  Object.entries(wordCount).forEach(([w, cnt]) => {
+    if (cnt >= 3) {
+      // Přidáme skóre relevantním úhlům
+      uhelSkore[30] += 1;  // Kulturní
+      uhelSkore[120] += 1; // Jazykový
+      uhelSkore[270] += 1; // Groteskní
+      totalScore += 3;
+      
+      const re = new RegExp(`\\b${escapeReg(w)}\\b`, 'gi');
+      workingText = workingText.replace(re, m =>
+        `<span class="angle-fixace" data-angle="30,120,270" style="background:#bbb;color:#000;border-radius:2px;cursor:pointer;padding:0 2px" title="Fixace (Kulturní, Jazykový, Groteskní)">${m}</span>`
+      );
+    }
+  });
+  
+  // 3. Změna délky vět (Groteskní)
+  if (sentences.length >= 3) {
+    const lens = sentences.map(s => s.split(/\s+/).length);
+    const avg = lens.reduce((a,b)=>a+b,0)/lens.length;
+    const std = Math.sqrt(lens.map(l => (l-avg)**2).reduce((a,b)=>a+b,0)/lens.length);
+    if (std > 3) {
+      uhelSkore[270] += 3; // Groteskní
+      totalScore += 3;
+    }
+    // Krátké věty pro Naivní
+    if (lens.filter(l => l <= 3).length > sentences.length * 0.3) {
+      uhelSkore[90] += 2; // Naivní
+      totalScore += 2;
+    }
+  }
+  
+  // 4. Neobvyklé sousedství (Ironický, Metaforický, Jazykový)
+  const words = text.split(/\s+/);
+  for (let i = 0; i < words.length - 1; i++) {
+    const word1 = words[i].toLowerCase().replace(/[.,!?…]/g, '');
+    const word2 = words[i+1].toLowerCase().replace(/[.,!?…]/g, '');
+    if (word1.length > 3 && word2.length > 3) {
+      // Detekce protikladů (Ironický)
+      if ((word1.match(/krásný|dobrý|velký|světlý|vždy|nikdy/) && word2.match(/ošklivý|špatný|malý|tmavý|nikdy|vždy/)) ||
+          (word2.match(/krásný|dobrý|velký|světlý|vždy|nikdy/) && word1.match(/ošklivý|špatný|malý|tmavý|nikdy|vždy/))) {
+        uhelSkore[240] += 1; // Ironický
+        totalScore += 1;
+      }
+    }
+  }
+  
+  markedText = workingText;
+  document.getElementById('highlighted').innerHTML = markedText;
+  
+  // Přidání click listenerů na zvýrazněné span
+  document.querySelectorAll('[data-angle]').forEach(span => {
+    span.addEventListener('click', (e) => {
+      const angleStr = e.target.dataset.angle;
+      const angles = angleStr.split(',').map(a => parseInt(a));
+      selectUhel(angles[0]); // Vybereme první úhel
+    });
+  });
+  
+  // Vytvoření legendy a grafu
+  updateLegendAndGraph();
+}
+
+function updateLegendAndGraph() {
+  const legEl = document.getElementById('legend');
+  const statsEl = document.getElementById('stats');
+  
+  // Seřadit úhly podle stupňů
+  const aktivniUhly = UHLY.filter(u => uhelSkore[u.stupen] > 0).sort((a,b) => a.stupen - b.stupen);
+  
+  legEl.innerHTML = aktivniUhly.map(u => 
+    `<span class="legend-item" style="background:${u.barva};color:${u.textBarva}" onclick="selectUhel(${u.stupen})">${u.plnyNazev} (${uhelSkore[u.stupen]})</span>`
+  ).join('');
+  
+  statsEl.innerHTML = `Celkem detekcí: ${totalScore} | Aktivních úhlů: ${aktivniUhly.length} z 12`;
+  
+  drawProtractor();
+}
+
+function drawProtractor() {
+  const canvas = document.getElementById('protractor');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const centerX = w/2, centerY = h/2;
+  const radius = 180;
+  
+  ctx.clearRect(0, 0, w, h);
+  
+  // Vykreslení základního kruhu
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#f9f9f9';
+  ctx.fill();
+  
+  // Vykreslení stupňů (30° intervaly)
+  for (let i = 0; i < 12; i++) {
+    const angle = i * 30 * Math.PI/180 - Math.PI/2; // -90° aby 0° byla nahoře
+    const x1 = centerX + Math.cos(angle) * radius;
+    const y1 = centerY + Math.sin(angle) * radius;
+    const x2 = centerX + Math.cos(angle) * (radius - 15);
+    const y2 = centerY + Math.sin(angle) * (radius - 15);
+    
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // Popisky stupňů
+    const labelX = centerX + Math.cos(angle) * (radius - 30);
+    const labelY = centerY + Math.sin(angle) * (radius - 30);
+    ctx.font = 'bold 12px Georgia';
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i*30 + '°', labelX, labelY);
+  }
+  
+  // Vykreslení segmentů podle skóre (pouze pokud je nějaké skóre)
+  const total = Object.values(uhelSkore).reduce((a,b)=>a+b,0);
+  if (total === 0) {
+    ctx.font = '14px Georgia';
+    ctx.fillStyle = '#aaa';
+    ctx.fillText('Sem vložte text a analyzujte', centerX, centerY + 50);
+    return;
+  }
+  
+  let startAngle = -Math.PI / 2; // Začátek nahoře (0°)
+  
+  // Vykreslíme postupně všechny úhly (i s nulovým skóre - velmi tenký proužek)
+  UHLY.sort((a,b) => a.stupen - b.stupen).forEach(u => {
+    const value = uhelSkore[u.stupen] || 0.1; // minimální hodnota pro viditelnost
+    const sliceAngle = (value / total) * 2 * Math.PI;
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+    ctx.closePath();
+    ctx.fillStyle = u.barva;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // Popisek procent (pouze pokud > 0)
+    if (uhelSkore[u.stupen] > 0) {
+      const midAngle = startAngle + sliceAngle / 2;
+      const labelRadius = radius * 0.6;
+      const x = centerX + Math.cos(midAngle) * labelRadius;
+      const y = centerY + Math.sin(midAngle) * labelRadius;
+      ctx.font = 'bold 10px Georgia';
+      ctx.fillStyle = u.textBarva;
+      ctx.fillText(Math.round((value/total)*100) + '%', x, y);
+    }
+    
+    startAngle += sliceAngle;
+  });
+  
+  // Přidání interaktivity - kliknutí na canvas
+  canvas.onclick = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const mouseX = (e.clientX - rect.left) * scaleX;
+    const mouseY = (e.clientY - rect.top) * scaleY;
+    
+    const dx = mouseX - centerX;
+    const dy = mouseY - centerY;
+    const distance = Math.sqrt(dx*dx + dy*dy);
+    
+    if (distance <= radius) {
+      let angle = Math.atan2(dy, dx);
+      if (angle < -Math.PI/2) angle += 2 * Math.PI;
+      
+      let start = -Math.PI/2;
+      const totalVal = Object.values(uhelSkore).reduce((a,b)=>a+b,0) || 1;
+      
+      for (let u of UHLY.sort((a,b) => a.stupen - b.stupen)) {
+        const sliceAngle = ((uhelSkore[u.stupen] || 0.1) / totalVal) * 2 * Math.PI;
+        if (angle >= start && angle < start + sliceAngle) {
+          selectUhel(u.stupen);
+          break;
+        }
+        start += sliceAngle;
+      }
+    }
+  };
+}
+
+function selectUhel(stupen) {
+  selectedUhel = stupen;
+  const uhel = uhelMap[stupen];
+  if (!uhel) return;
+  
+  // Najít protilehlý úhel
+  const protilehly = uhelMap[uhel.protilehly];
+  
+  // Aktualizace informačního panelu
+  document.getElementById('angle-title').textContent = `✨ ${uhel.plnyNazev}`;
+  document.getElementById('angle-technika').innerHTML = `<strong>Technika:</strong> ${uhel.technika}`;
+  document.getElementById('angle-popis').innerHTML = `<strong>Popis:</strong> ${uhel.popis}`;
+  document.getElementById('angle-cil').innerHTML = `<strong>Cíl intervence:</strong> ${uhel.cil}`;
+  document.getElementById('angle-protilehly').innerHTML = `↔ Protilehlý úhel: ${protilehly ? protilehly.plnyNazev : ''} (${protilehly ? protilehly.nazev : ''})`;
+  
+  // Zvýraznění v legendě
+  document.querySelectorAll('.legend-item').forEach(el => el.classList.remove('active'));
+  const legendItems = document.querySelectorAll('.legend-item');
+  legendItems.forEach(el => {
+    if (el.textContent.includes(uhel.plnyNazev)) el.classList.add('active');
+  });
+  
+  // Zvýraznění v textu
+  if (markedText) {
+    const spans = document.querySelectorAll('[data-angle]');
+    spans.forEach(span => {
+      const spanAngles = span.dataset.angle.split(',').map(a => parseInt(a));
+      if (spanAngles.includes(stupen)) {
+        span.style.border = '2px solid black';
+        span.style.boxShadow = '0 0 5px rgba(0,0,0,0.5)';
+        span.style.fontWeight = 'bold';
+      } else {
+        span.style.border = 'none';
+        span.style.boxShadow = 'none';
+        span.style.fontWeight = 'normal';
+      }
+    });
+  }
+}
+
+function reset() {
+  document.getElementById('input-text').value = '';
+  document.getElementById('highlighted').innerHTML = '';
+  document.getElementById('legend').innerHTML = '';
+  document.getElementById('stats').innerHTML = '';
+  document.getElementById('angle-title').textContent = '✨ Klikni na segment úhloměru';
+  document.getElementById('angle-technika').innerHTML = '';
+  document.getElementById('angle-popis').innerHTML = '';
+  document.getElementById('angle-cil').innerHTML = '';
+  document.getElementById('angle-protilehly').innerHTML = '';
+  selectedUhel = null;
+  
+  // Reset skóre
+  UHLY.forEach(u => uhelSkore[u.stupen] = 0);
+  totalScore = 0;
+  
+  // Reset canvasu
+  const canvas = document.getElementById('protractor');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '14px Georgia';
+  ctx.fillStyle = '#aaa';
+  ctx.textAlign = 'center';
+  ctx.fillText('Sem vložte text a analyzujte', canvas.width/2, canvas.height/2);
+}
+
+function escapeReg(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+// Inicializace
+reset();
+</script>
+</body>
+</html>
