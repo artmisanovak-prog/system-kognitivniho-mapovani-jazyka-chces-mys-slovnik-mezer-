@@ -9,7 +9,7 @@ Interaktivní nástroje pro analýzu kognitivních stylů na základě struktury
 ---
 
  - [kocour 12x uhly](doma/karty/Kocour/kocour-uhly12.html)
- - [ryba 12x uhly](doma/karty/Ryba/ryba-uhly12.html)
+ - [ryba 12x uhly](doma/karty/Ryba/ryba_uhly12.html)
  - [motyl 12x uhly](doma/karty/Motyl/motyl-uhly12.html)
  - [Liska 12x uhly](doma/karty/Liska/liska-uhly12.html)
  ---
