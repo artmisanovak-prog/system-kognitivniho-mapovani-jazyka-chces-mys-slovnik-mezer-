@@ -28,6 +28,28 @@ Interaktivní nástroje pro analýzu kognitivních stylů na základě struktury
  - [lemur 12x uhly](doma/karty/Lemur/lemur-uhly12.html)
  - [vrabec 12x uhly](doma/karty/Vrabec/vrabec-uhly12.html)
 
+- [pavouk 12x uhly](doma/karty/Pavouk/pavouk-uhly12.html)
+ - [žralok 12x uhly](doma/karty/Zralok/zralok-uhly12.html)
+ - [páv 12x uhly](doma/karty/Pav/pav-uhly12.html)
+ - [osel 12x uhly](doma/karty/Osel/osel-uhly12.html)
+
+- [drak 12x uhly](doma/karty/Drak/drak-uhly12.html)
+ - [had 12x uhly](doma/karty/Had/had-uhly12.html)
+ - [kravy 12x uhly](doma/karty/Kravy/kravy-uhly12.html)
+ - [beran 12x uhly](doma/karty/Beran/beran-uhly12.html)
+
+ - [hvězdice 12x uhly](doma/karty/Hvezdice/hvezdice-uhly12.html)
+ - [chameleon 12x uhly](doma/karty/Chameleon/chameleon-uhly12.html)
+ - [panda a vlk 12x uhly](doma/karty/Panda/panda-uhly12.html)
+ - [parohy 12x uhly](doma/karty/Parohy/parohy-uhly12.html)
+
+ - [prase 12x uhly](doma/karty/Prase/prase-uhly12.html)
+ - [veverka 12x uhly](doma/karty/Veverka/veverka-uhly12.html)
+ - [husy 12x uhly](doma/karty/Husy/husy-uhly12.html)
+ - [slon 12x uhly](doma/karty/Slon/slon-uhly12.html)
+
+---
+
 ---
 
 ## 🧠 Přehled metodiky
