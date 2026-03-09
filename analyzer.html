@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐁 Mapování kognitivních úhlů</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Georgia,serif;background:#fff;color:#111;max-width:900px;margin:0 auto;padding:2rem 1rem;line-height:1.6}
+h1{font-size:1.5rem;margin-bottom:.2rem}
+.sub{color:#888;font-size:.85rem;margin-bottom:1.5rem}
+textarea{width:100%;padding:.5rem;border:1px solid #ccc;font-family:Georgia,serif;font-size:.9rem;resize:vertical;min-height:200px;margin-bottom:1rem}
+.btn{padding:.5rem 1.2rem;background:#111;color:#fff;border:none;cursor:pointer;font-size:.9rem;font-family:Georgia,serif}
+.btn:hover{background:#333}
+.btn-outline{background:#fff;color:#111;border:1px solid #111}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.highlighted{width:100%;padding:.5rem;border:1px solid #ccc;font-size:.9rem;min-height:200px;background:#fafafa;line-height:2;white-space:pre-wrap;display:none}
+.legend{display:flex;flex-wrap:wrap;gap:.3rem;margin:1rem 0}
+.legend-item{font-size:.75rem;padding:.2rem .5rem;border-radius:3px;cursor:help}
+.results{margin-top:2rem;border-top:2px solid #111;padding-top:1rem}
+.results h2{font-size:1rem;margin-bottom:.5rem}
+.profile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.5rem;margin-top:.5rem}
+.profile-item{padding:.4rem .6rem;background:#f5f5f5;border-radius:3px;font-size:.8rem}
+.profile-item strong{display:block;font-size:.7rem;color:#555}
+.angle-summary{margin-bottom:2rem;padding:1rem;background:#f9f9f9;border-left:4px solid #111}
+.angle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0}
+.angle-card{padding:1rem;background:#fff;border:1px solid #ddd;border-radius:4px;text-align:center}
+.angle-card .score{font-size:2rem;font-weight:bold;line-height:1}
+.angle-card .label{font-size:.8rem;color:#555}
+.angle-desc{font-size:.7rem;margin-top:.3rem;color:#777}
+</style>
+</head>
+<body>
+
+<h1>🐁 Mapování kognitivních úhlů</h1>
+<div class="sub">Detekce 12 typů myšlení podle struktury jazyka</div>
+
+<textarea id="input-text" placeholder="Vložte text (e-mail, chat, přepis rozhovoru, deník…)"></textarea>
+
+<div class="row">
+  <button class="btn" onclick="analyze()">🔍 Analyzovat úhly</button>
+  <button class="btn btn-outline" onclick="resetText()">✕ Smazat</button>
+  <button class="btn btn-outline" onclick="switchView()" id="toggle-btn">🔎 Zobrazit zvýrazněný text</button>
+</div>
+
+<div class="highlighted" id="highlighted"></div>
+<div class="legend" id="legend"></div>
+
+<div class="results" id="results" style="display:none">
+  <h2>📊 Profil kognitivních úhlů</h2>
+  <div class="angle-summary" id="dominant-angle"></div>
+  <div class="angle-grid" id="angle-grid"></div>
+  <h2 style="margin-top:1.5rem">📋 Detailní detekce</h2>
+  <div class="profile-grid" id="profile"></div>
+  <p style="font-size:.75rem;color:#888;margin-top:1rem">Detekce je založena na klíčových slovech, vzorcích a strukturních metrikách. Experimentální nástroj.</p>
+</div>
+
+<script>
+// Definice 12 úhlů podle tabulky
+const UHLY = [
+  { id: 'analogicky', uhel: '0° Analogický', technika: 'Záměrná nejednoznačnost', cíl: 'Hledání paralel a více významů',
+    color: '#e3f2fd', textColor: '#0d47a1', patterns: ['jako', 'podobně', 'stejně', 'analogie', 'přirovnání', 'tak jako', 'nebo', 'může znamenat'] },
+  { id: 'asociacni', uhel: '180° Asociační', technika: 'Odskoky / Rozpad koheze', cíl: 'Uvolnění myšlenek z logických řetězců',
+    color: '#fff3e0', textColor: '#e65100', patterns: ['najednou', 'a pak', 'napadá mě', 'při tom', 'souvisí s', 'evokuje', 'vzpomněl jsem'] },
+  { id: 'kulturni', uhel: '30° Kulturní', technika: 'Přesycení / Redundance (obecné fráze)', cíl: 'Ukotvení ve sdílených vzorcích',
+    color: '#e8f5e8', textColor: '#1b5e20', patterns: ['jak se říká', 'obecně platí', 'společnost', 'normální', 'tradiční', 'každý ví', 'běžné'] },
+  { id: 'introspektivni', uhel: '210° Introspektivní', technika: 'Izolace / Vytržení z kontextu (osobní)', cíl: 'Zaměření na emoce a myšlenky',
+    color: '#f3e5f5', textColor: '#4a0072', patterns: ['já', 'cítím', 'prožívám', 'můj', 'osobně', 've mně', 'moje pocity', 'sám sobě'] },
+  { id: 'filozoficky', uhel: '60° Filozofický', technika: 'Záměrná nejednoznačnost', cíl: 'Zpochybňování významů, abstraktní otázky',
+    color: '#e0f2f1', textColor: '#006064', patterns: ['co je', 'podstata', 'smysl', 'existuje', 'být', 'vědomí', 'absolutní', 'relativní'] },
+  { id: 'ironicky', uhel: '240° Ironický', technika: 'Neobvyklé sousedství (spojení protikladů)', cíl: 'Napětí skrze paradox',
+    color: '#ffebee', textColor: '#b71c1c', patterns: ['samozřejmě', 'že ano', 'jak jinak', 'tedy', 'takže vlastně', 'že', 'ale jistě'] },
+  { id: 'naivni', uhel: '90° Naivní', technika: 'Minimalismus / Elipsa', cíl: 'Zjednodušení na základní sdělení',
+    color: '#fffde7', textColor: '#827717', patterns: ['prostě', 'je to tak', 'jasné', 'jednoduché', 'to je ono', 'hotovo', 'a basta'] },
+  { id: 'groteskni', uhel: '270° Groteskní', technika: 'Změna délky vět / Rytmus (extrémy)', cíl: 'Dramatický, přehnaný projev',
+    color: '#fce4ec', textColor: '#880e4f', patterns: ['absurdní', 'přehnaný', 'neskutečný', 'obrovský', 'strašně', 'hrozně', 'fantasticky'] },
+  { id: 'jazykovy', uhel: '120° Jazykový', technika: 'Neobvyklé sousedství (hra se slovy)', cíl: 'Estetické kvality, zvuk',
+    color: '#e8eaf6', textColor: '#1a237e', patterns: ['zvuk', 'slovo', 'říkat', 'vyslovit', 'jazyk', 'řeč', 'rým', 'zní'] },
+  { id: 'absurdni', uhel: '300° Absurdní', technika: 'Změna slovosledu (Permutace)', cíl: 'Narušení logické stavby',
+    color: '#fbe9e7', textColor: '#bf360c', patterns: ['proč', 'kdyby', 'co když', 'není možné', 'paradox', 'nesmysl', 'logika'] },
+  { id: 'metaforicky', uhel: '150° Metaforický', technika: 'Neobvyklé sousedství (obrazná spojení)', cíl: 'Spojování vzdálených konceptů',
+    color: '#f1f8e9', textColor: '#33691e', patterns: ['jako', 'metafora', 'symbol', 'obraz', 'připomíná', 'znamená', 'vyjadřuje'] },
+  { id: 'surrealisticky', uhel: '330° Surrealistický', technika: 'Odskoky / Rozpad koheze (snová logika)', cíl: 'Propojování nesouvisejících obrazů',
+    color: '#ede7f6', textColor: '#311b92', patterns: ['sen', 'zdálo se', 'podivný', 'magický', 'nereálný', 'fantazie', 'představa'] }
+];
+
+// Techniky pro pokročilou detekci (strukturní)
+const TECHNIKY = {
+  zmenaDelkyVet: { id: 'delka', label: 'Extrémní změny délek vět', color: '#ffe0b2' },
+  permutace: { id: 'permutace', label: 'Narušený slovosled', color: '#d7ccc8' },
+  redundance: { id: 'redundance', label: 'Přesycené opakování', color: '#b2dfdb' },
+  elipsa: { id: 'elipsa', label: 'Minimalismus / výpustky', color: '#fff9c4' },
+  odskok: { id: 'odskok', label: 'Asociativní odskoky', color: '#ffe0b2' }
+};
+
+let markedText = '';
+let angleScores = {};
+
+function analyze() {
+  const text = document.getElementById('input-text').value;
+  if (!text.trim()) { alert('Vložte text'); return; }
+  
+  const sentences = text.split(/(?<=[.!?…])\s+/).filter(s => s.trim().length > 3);
+  const allWords = text.toLowerCase().split(/\s+/);
+  const wordCount = {};
+  allWords.forEach(w => { if (w.length > 4) wordCount[w] = (wordCount[w]||0)+1; });
+  
+  // Inicializace skóre pro úhly
+  UHLY.forEach(u => angleScores[u.id] = 0);
+  
+  let workingText = text;
+  const foundAngles = new Set();
+  const angleMatches = {};
+  
+  // 1. Detekce podle klíčových slov (každý úhel)
+  UHLY.forEach(u => {
+    let matchCount = 0;
+    u.patterns.forEach(pat => {
+      const re = new RegExp(`\\b${escapeReg(pat)}\\b`, 'gi');
+      const matches = text.match(re);
+      if (matches) {
+        matchCount += matches.length;
+        workingText = workingText.replace(re, m =>
+          `<span class="angle-${u.id}" style="background:${u.color};color:${u.textColor};border-radius:2px" title="${u.uhel}">${m}</span>`
+        );
+      }
+    });
+    if (matchCount > 0) {
+      angleScores[u.id] += matchCount;
+      foundAngles.add(u.id);
+      angleMatches[u.id] = matchCount;
+    }
+  });
+  
+  // 2. Strukturní metriky (napojení na techniky)
+  
+  // Fixace / opakování (přispívá ke Kulturnímu, Jazykovému, Grotesknímu)
+  Object.entries(wordCount).forEach(([w, cnt]) => {
+    if (cnt >= 3) {
+      angleScores.kulturni += 1;
+      angleScores.jazykovy += 1;
+      angleScores.groteskni += 1;
+      foundAngles.add('kulturni'); foundAngles.add('jazykovy'); foundAngles.add('groteskni');
+      const re = new RegExp(`\\b${escapeReg(w)}\\b`, 'gi');
+      workingText = workingText.replace(re, m =>
+        `<span style="background:${TECHNIKY.redundance.color};color:#000;border-radius:2px" title="Fixace / redundance">${m}</span>`
+      );
+    }
+  });
+  
+  // Změna délky vět (Groteskní)
+  if (sentences.length >= 3) {
+    const lens = sentences.map(s => s.split(/\s+/).length);
+    const avg = lens.reduce((a,b)=>a+b,0)/lens.length;
+    const std = Math.sqrt(lens.map(l => (l-avg)**2).reduce((a,b)=>a+b,0)/lens.length);
+    if (std > 3) {
+      angleScores.groteskni += 3;
+      foundAngles.add('groteskni');
+    }
+    // Krátké věty (Naivní - elipsa)
+    if (lens.filter(l => l <= 3).length > sentences.length * 0.3) {
+      angleScores.naivni += 2;
+      foundAngles.add('naivni');
+    }
+  }
+  
+  // Odskoky / rozpad koheze (Asociační, Surrealistický)
+  const topicShiftWords = ['mimochodem', 'ale jinak', 'kromě toho', 'a ještě', 'a vlastně', 'co se týče'];
+  topicShiftWords.forEach(w => {
+    if (text.includes(w)) {
+      angleScores.asociacni += 1;
+      angleScores.surrealisticky += 1;
+      foundAngles.add('asociacni'); foundAngles.add('surrealisticky');
+    }
+  });
+  
+  // Neobvyklé sousedství (Ironický, Jazykový, Metaforický) – simulace pomocí bigramů
+  const words = text.split(/\s+/);
+  for (let i = 0; i < words.length - 1; i++) {
+    const pair = words[i].toLowerCase() + ' ' + words[i+1].toLowerCase();
+    // Detekce protikladů (Ironický)
+    if ((words[i].match(/krásný|dobrý|hezký|velký/) && words[i+1].match(/ošklivý|špatný|malý/)) ||
+        (words[i].match(/vždy|nikdy/) && words[i+1].match(/nikdy|vždy/))) {
+      angleScores.ironicky += 2;
+      foundAngles.add('ironicky');
+    }
+    // Neobvyklá spojení (Metaforický, Jazykový)
+    if (words[i].length > 4 && words[i+1].length > 4 && !commonPairs.includes(pair)) {
+      angleScores.metaforicky += 0.5;
+      angleScores.jazykovy += 0.5;
+      foundAngles.add('metaforicky'); foundAngles.add('jazykovy');
+    }
+  }
+  
+  // Minimalismus (Naivní) – krátké věty už máme, přidáme elipsy
+  if (text.includes('…') || text.includes('...')) {
+    angleScores.naivni += 1;
+    foundAngles.add('naivni');
+  }
+  
+  // Absurdní – otázky, podmínky
+  const absurdIndicators = ['proč', 'kdyby', 'co když', 'jestli', 'možná že ne', 'není jisté'];
+  absurdIndicators.forEach(w => {
+    if (text.includes(w)) {
+      angleScores.absurdni += 1;
+      foundAngles.add('absurdni');
+    }
+  });
+  
+  markedText = workingText;
+  document.getElementById('highlighted').innerHTML = markedText;
+  
+  // Legenda (zobrazení detekovaných úhlů)
+  const foundAnglesArray = UHLY.filter(u => foundAngles.has(u.id));
+  const legEl = document.getElementById('legend');
+  legEl.innerHTML = foundAnglesArray.map(u => 
+    `<span class="legend-item" style="background:${u.color};color:${u.textColor}">${u.uhel}</span>`
+  ).join('');
+  
+  // Profil (detailní)
+  const profileEl = document.getElementById('profile');
+  profileEl.innerHTML = foundAnglesArray.map(u => {
+    const score = angleScores[u.id] || 0;
+    return `<div class="profile-item" style="border-left:3px solid ${u.color}">
+      <strong>${u.uhel}</strong> ${score.toFixed(1)}× (technika: ${u.technika})
+    </div>`;
+  }).join('');
+  
+  // Grid úhlů (všechny s hodnotami)
+  const gridEl = document.getElementById('angle-grid');
+  gridEl.innerHTML = UHLY.map(u => {
+    const score = angleScores[u.id] || 0;
+    const maxScore = Math.max(...Object.values(angleScores));
+    const intensity = maxScore > 0 ? (score / maxScore) * 100 : 0;
+    return `<div class="angle-card" style="background:${u.color}20; border-color:${u.color}">
+      <div class="score" style="color:${u.textColor}">${score.toFixed(1)}</div>
+      <div class="label">${u.uhel}</div>
+      <div class="angle-desc">${u.technika}</div>
+    </div>`;
+  }).join('');
+  
+  // Dominantní úhel
+  let dominant = null;
+  let maxScore = -1;
+  Object.entries(angleScores).forEach(([id, score]) => {
+    if (score > maxScore) { maxScore = score; dominant = UHLY.find(u => u.id === id); }
+  });
+  
+  if (dominant) {
+    document.getElementById('dominant-angle').innerHTML = `
+      <strong>🧠 Dominantní úhel:</strong> ${dominant.uhel} (${dominant.technika})<br>
+      <span style="font-size:.9rem">${dominant.cíl}</span>
+    `;
+  }
+  
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('toggle-btn').style.display = 'inline-block';
+}
+
+// Pomocné funkce
+function switchView() {
+  const input = document.getElementById('input-text');
+  const hl = document.getElementById('highlighted');
+  const btn = document.getElementById('toggle-btn');
+  if (hl.style.display === 'none' || hl.style.display === '') {
+    hl.style.display = 'block';
+    input.style.display = 'none';
+    btn.textContent = '✏ Zpět na text';
+  } else {
+    hl.style.display = 'none';
+    input.style.display = '';
+    btn.textContent = '🔎 Zobrazit zvýrazněný text';
+  }
+}
+
+function resetText() {
+  document.getElementById('input-text').value = '';
+  document.getElementById('highlighted').innerHTML = '';
+  document.getElementById('legend').innerHTML = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('toggle-btn').style.display = 'none';
+  document.getElementById('highlighted').style.display = 'none';
+  document.getElementById('input-text').style.display = '';
+}
+
+function escapeReg(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+// Běžné dvojice pro vyloučení (mock)
+const commonPairs = ['je to', 'to je', 'se má', 'a to', 've své', 'na tom', 'z toho', 'pro to'];
+</script>
+</body>
+</html>
