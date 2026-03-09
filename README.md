@@ -8,6 +8,10 @@ Interaktivní nástroje pro analýzu kognitivních stylů na základě struktury
 
 ---
 
+- [kocour 12x uhly](doma/karty/Kocour/kocour-uhly12.html)
+
+---
+
 ## 🧠 Přehled metodiky
 
 Jazyk není jen nosičem obsahu, ale i odrazem způsobu myšlení. Každý z nás přirozeně tíhne k určitým **kognitivním úhlům**. Tento projekt umožňuje:
