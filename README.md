@@ -10,6 +10,9 @@ Interaktivní nástroje pro analýzu kognitivních stylů na základě struktury
 
 - [investor pitch desk](doma/investor_pitch_deck.html)
 
+- [analýza a strategie](doma/analyza_a_strategie.html)
+
+  
 ---
 
  - [kocour 12x uhly](doma/karty/Kocour/kocour-uhly12.html)
