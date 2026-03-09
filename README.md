@@ -12,11 +12,21 @@ Interaktivní nástroje pro analýzu kognitivních stylů na základě struktury
  - [ryba 12x uhly](doma/karty/Ryba/ryba_uhly12.html)
  - [motyl 12x uhly](doma/karty/Motyl/motyl-uhly12.html)
  - [Liska 12x uhly](doma/karty/Liska/liska-uhly12.html)
- ---
+  
  - [plamenak 12x uhly](doma/karty/Plamenak/plamenak-uhly12.html)
  - [netopýr 12x uhly](doma/karty/Netopyr/netopyr-uhly12.html)
  - [tygr 12x uhly](doma/karty/Tygr/tygr-uhly12.html)
  - [čáp 12x uhly](doma/karty/Cap/cap-uhly12.html)
+
+ - [jednorožec 12x uhly](doma/karty/Jednorozec/jednorozec-uhly12.html)
+ - [želva 12x uhly](doma/karty/Zelva/zelva-uhly12.html)
+ - [zajíc 12x uhly](doma/karty/Zajic/zajic-uhly12.html)
+ - [krokodyl 12x uhly](doma/karty/Krokodyl/krokodyl-uhly12.html)
+
+ - [moucha 12x uhly](doma/karty/Moucha/moucha-uhly12.html)
+ - [žížala 12x uhly](doma/karty/Zizala/zizala-uhly12.html)
+ - [lemur 12x uhly](doma/karty/Lemur/lemur-uhly12.html)
+ - [vrabec 12x uhly](doma/karty/Vrabec/vrabec-uhly12.html)
 
 ---
 
