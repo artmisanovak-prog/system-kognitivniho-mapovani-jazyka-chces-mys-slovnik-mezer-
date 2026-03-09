@@ -1,0 +1,1 @@
+# system-kognitivniho-mapovani-jazyka-chces-mys-slovnik-mezer-
