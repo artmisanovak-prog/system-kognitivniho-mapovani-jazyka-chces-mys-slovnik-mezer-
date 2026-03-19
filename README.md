@@ -14,7 +14,7 @@ Interaktivní nástroje pro analýzu kognitivních stylů na základě struktury
 
 ---
 
-- [angle mapper](doma/nastroje/angle_mapper.html.html)
+- [angle mapper](doma/nastroje/angle_mapper.html)
 - [protractor](doma/investor_pitch_deck.html)
 - [analyzer](doma/investor_pitch_deck.html)
 - [analyzerB](doma/investor_pitch_deck.html)
