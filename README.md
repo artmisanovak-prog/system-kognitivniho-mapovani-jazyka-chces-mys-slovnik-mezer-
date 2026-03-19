@@ -12,7 +12,14 @@ Interaktivní nástroje pro analýzu kognitivních stylů na základě struktury
 
 - [analýza a strategie](doma/analyza_a_strategie.html)
 
+---
+
+- [angle mapper](doma/nastroje/angle_mapper.html.html)
+- [protractor](doma/investor_pitch_deck.html)
+- [analyzer](doma/investor_pitch_deck.html)
+- [analyzerB](doma/investor_pitch_deck.html)
   
+
 ---
 
  - [kocour 12x uhly](doma/karty/Kocour/kocour-uhly12.html)
