@@ -6,6 +6,9 @@ Interaktivní nástroje pro analýzu kognitivních stylů na základě struktury
 
 🔗 **Živá ukázka**: [https://artmisanovak-prog.github.io/Chces_MYS-_forezni_jazykove_mapovani/](https://artmisanovak-prog.github.io/Chces_MYS-_forezni_jazykove_mapovani/)
 
+
+- [rozcestnik](doma/rozcestnik.html)
+
 ---
 
 - [investor pitch desk](doma/investor_pitch_deck.html)
